@@ -11,7 +11,7 @@ export const config = {
     uri: process.env.DATABASE_URL,
   },
   jwt: {
-    secret: process.env.JWT_SECRET,
+    secret: process.env.JWT_SECRET || "",
     expiresIn: `${process.env.JWT_EXPIRATION || 15}`,
   },
   mail: {
