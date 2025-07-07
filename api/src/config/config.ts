@@ -12,7 +12,7 @@ export const config = {
   },
   jwt: {
     secret: process.env.JWT_SECRET || "",
-    expiresIn: `${process.env.JWT_EXPIRATION || 15}`,
+    expiresIn: `${process.env.JWT_EXPIRATION || 15}Minutes`,
   },
   mail: {
     sender: process.env.MAIL_SENDER,
