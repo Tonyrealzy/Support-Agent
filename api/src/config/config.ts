@@ -22,6 +22,6 @@ export const config = {
   },
   thirdParty: {
     brevoKey: process.env.BREVO_KEY,
-    googleApiKey: process.env.GOOGLE_API_KEY,
+    geminiApiKey: process.env.GEMINI_API_KEY,
   },
 };
