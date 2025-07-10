@@ -1,14 +1,7 @@
 import handlebars from "handlebars";
 import path from "path";
 import fs from "fs";
-
-interface MailProps {
-  username: string;
-  otp: string;
-  otpExpiry: number;
-  appName: string;
-  year: number;
-}
+import { MailProps } from "../../models/signup";
 
 export const renderPasswordResetEmail = (props: MailProps): string => {
   const filePath = path.join(__dirname, "templates", "passwordReset.hbs");

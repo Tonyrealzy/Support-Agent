@@ -14,11 +14,74 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+model Organisation {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  name        String   @unique
+  website     String   @unique
+  tier        String
+
+  phone       String?
+  logoUrl     String?
+  address     String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  documents   Document[]
 }
 
-// npx prisma migrate dev --name init
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  password          String
+  role              Role     @default(ADMIN)
+  roleId            Int
+  isActive          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  name              String?
+  organisationId    String?
+  organisation      Organisation? @relation(fields: [organisationId], references: [id])
+  emailVerification EmailVerification?
+
+  @@index([organisationId])
+}
+
+model UserSession {
+  id               String   @id @default(uuid())
+  userId           String
+  userId           User     @references(fields: [userId], references: [id])
+  token            String
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+  isValid          Boolean  @default(true)
+
+  @@index([userId])
+}
+
+model EmailVerification {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  name              String
+  email             String
+  user              User      @relation(fields: [userId], references: [id])
+  otp               String    @unique
+  expiresAt         DateTime
+  isUsed            Boolean   @default(false)
+  retryCount        Int       @default(0)
+  createdAt         DateTime  @default(now())
+}
+
+model Document {
+  id               String @id @default(uuid())
+  title            String
+  content          String
+  embedding        Unsupported("vector(768)")
+  createdAt        DateTime @default(now())
+
+  organisationId   String
+  organisation     Organisation @relation(fields: [organisationId], references: [id])
+  @@index([organisationId])
+}

@@ -1,22 +1,14 @@
-import { PrismaClient } from "@prisma/client";
-import { config } from "../config";
+import logger from "../logger";
+import db from "./database";
 
-declare global {
-  namespace NodeJS {
-    interface Global {}
+const dbConnection = () => {
+  try {
+    db.$connect();
+    logger.info("✅ Database connected.");
+  } catch (error) {
+    logger.error("❌ Failed to connect to database: ", error);
+    process.exit(1);
   }
-}
+};
 
-interface CustomNodeJsGlobal extends NodeJS.Global {
-  prisma: PrismaClient;
-}
-
-declare const global: CustomNodeJsGlobal;
-
-const db = global.prisma || new PrismaClient();
-
-if (config.app.env === "development") {
-  global.prisma = db;
-}
-
-export default db;
+export default dbConnection;

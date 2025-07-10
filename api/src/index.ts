@@ -4,6 +4,7 @@ import { config } from "./config/config";
 import logger from "./config/logger";
 import { errorHandler } from "./middlewares/errorHandler";
 import { corsOptions } from "./middlewares/corsOptions";
+import dbConnection from "./config/database/connection";
 
 const app = express();
 
@@ -18,6 +19,8 @@ app.use((_: any, res: express.Response) => {
 });
 
 app.use(errorHandler);
+
+dbConnection();
 
 app.listen(config.app.port, () => {
   logger.info(
