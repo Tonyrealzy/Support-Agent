@@ -3,6 +3,7 @@ import pdf from "pdf-parse";
 import fs from "fs";
 import path from "path";
 import logger from "../config/logger";
+import { AppError } from "./appError";
 
 const extractFromDocx = async (path: string) => {
   const buffer = fs.readFileSync(path);
@@ -38,6 +39,6 @@ export const extractText = async (pathname: string, documentName: string) => {
   } else if (ext === ".docx") {
     return await extractFromDocx(pathname);
   } else {
-    throw new Error("Unsupported file type");
+    throw new AppError("Unsupported file type", 415);
   }
 };

@@ -1,7 +1,6 @@
 import { Role } from ".";
 
 export interface UserReq {
-  id: string;
   email: string;
   password: string;
   name: string;
@@ -39,6 +38,11 @@ export interface VerifyOTPReq {
 export interface ChangePasswordReq {
   email: string;
   otp: string;
+  password: string;
+}
+
+export interface LoginReq {
+  email: string;
   password: string;
 }
 

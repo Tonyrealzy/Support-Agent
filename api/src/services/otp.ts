@@ -3,6 +3,7 @@ import db from "../config/database/database";
 import { User } from "../models";
 import { MailService } from "./mail";
 import { VerifyOTPReq } from "../models/requests";
+import { AppError } from "../utils/appError";
 
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RETRIES = 5;
@@ -19,7 +20,7 @@ export const OtpService = {
       where: { email: email },
     });
     if (!existingUser) {
-      throw new Error("User not found");
+      throw new AppError("User not found", 404);
     }
     await db.emailVerification.upsert({
       where: { email },
@@ -50,17 +51,17 @@ export const OtpService = {
       where: { email: data.email },
     });
     if (!existingUser) {
-      throw new Error("User not found");
+      throw new AppError("User not found", 404);
     }
 
     const verificationExists = await db.emailVerification.findUnique({
       where: { email: data.email },
     });
-    if (!verificationExists) throw new Error("No OTP request found");
-    if (verificationExists.isUsed) throw new Error("OTP already used");
+    if (!verificationExists) throw new AppError("No OTP request found", 404);
+    if (verificationExists.isUsed) throw new AppError("OTP already used", 400);
     if (isAfter(new Date(), verificationExists.expiresAt))
-      throw new Error("OTP expired");
-    if (verificationExists.otp !== data.otp) throw new Error("Invalid OTP");
+      throw new AppError("OTP expired", 400);
+    if (verificationExists.otp !== data.otp) throw new AppError("Invalid OTP", 400);
 
     await db.emailVerification.update({
       where: { userId: existingUser.id },
@@ -80,7 +81,7 @@ export const OtpService = {
       where: { email },
     });
     if (!existingUser) {
-      throw new Error("User not found");
+      throw new AppError("User not found", 404);
     }
 
     const otpRecord = await db.emailVerification.findUnique({
@@ -90,7 +91,7 @@ export const OtpService = {
       return await OtpService.sendOtp(email);
     }
     if (otpRecord.retryCount >= MAX_RETRIES)
-      throw new Error("Retry limit reached");
+      throw new AppError("Retry limit reached", 429);
 
     const otp = OtpService.generateOtp();
     const expiresAt = addMinutes(new Date(), OTP_EXPIRY_MINUTES);

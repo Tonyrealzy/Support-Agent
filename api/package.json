@@ -29,11 +29,13 @@
     "handlebars": "^4.7.8",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.9.1",
     "morgan": "^1.10.0",
     "nodemailer": "^7.0.4",
     "pdf-parse": "^1.1.1",
     "pg": "^8.16.3",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
