@@ -6,7 +6,7 @@ const JWT_SECRET = config.jwt.secret;
 
 export const JwtAuth = {
   // Sign basically the organisationID, role, organisationEmail and any other unique field
-  signedToken: (
+  getSignedToken: (
     payload: JwtUserPayload,
     options: SignOptions = {
       expiresIn: config.jwt.expiresIn as jwt.SignOptions["expiresIn"],

@@ -18,7 +18,7 @@ export const EmbeddingService = {
   ) => {
     // ORDER BY embedding <#> '${JSON.stringify(queryEmbedding)}'::vector
     // This is the actual vector similarity search.
-    return await db.$queryRawUnsafe(`
+    return await db.$queryRaw(`
           SELECT id, content
           FROM "Document"
           WHERE "organisationId" = '${organisationId}'

@@ -1,5 +1,6 @@
 import db from "../config/database/database";
 import { OrgReq } from "../models/requests";
+import { AppError } from "../utils/appError";
 
 export const OrganisationService = {
   createOrganisation: async (data: OrgReq) => {
@@ -21,7 +22,7 @@ export const OrganisationService = {
     const org = await db.organisation.findUnique({
       where: { id },
     });
-    if (!org) throw new Error("Organisation not found");
+    if (!org) throw new AppError("Organisation not found", 404);
 
     return await db.organisation.update({
       where: { id },

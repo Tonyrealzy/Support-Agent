@@ -1,10 +1,12 @@
-import { addMinutes, isAfter } from "date-fns";
+import { addMinutes, isAfter, isValid } from "date-fns";
 import db from "../config/database/database";
-import { ChangePasswordReq, UserReq } from "../models/requests";
+import { ChangePasswordReq, LoginReq, UserReq } from "../models/requests";
 import { hashPassword, verifyPassword } from "../utils/hash";
 import { OTP_EXPIRY_MINUTES, OtpService } from "./otp";
 import { User } from "../models";
 import { MailService } from "./mail";
+import { JwtAuth } from "../utils/jwt";
+import { AppError } from "../utils/appError";
 
 export const AuthService = {
   signUp: async (data: UserReq) => {
@@ -12,7 +14,7 @@ export const AuthService = {
       where: { email: data.email },
     });
     if (existing) {
-      throw new Error("User already exists");
+      throw new AppError("User already exists", 409);
     }
 
     const hashedPassword = await hashPassword(data.password);
@@ -31,7 +33,7 @@ export const AuthService = {
       where: { email: email },
     });
     if (!existingUser) {
-      throw new Error("User not found");
+      throw new AppError("User not found", 404);
     }
     await db.emailVerification.upsert({
       where: { email },
@@ -62,17 +64,18 @@ export const AuthService = {
       where: { email: data.email },
     });
     if (!existingUser) {
-      throw new Error("User not found");
+      throw new AppError("User not found", 404);
     }
 
     const verificationExists = await db.emailVerification.findUnique({
       where: { email: data.email },
     });
-    if (!verificationExists) throw new Error("No OTP request found");
-    if (verificationExists.isUsed) throw new Error("OTP already used");
+    if (!verificationExists) throw new AppError("No OTP request found", 404);
+    if (verificationExists.isUsed) throw new AppError("OTP already used", 400);
     if (isAfter(new Date(), verificationExists.expiresAt))
-      throw new Error("OTP expired");
-    if (verificationExists.otp !== data.otp) throw new Error("Invalid OTP");
+      throw new AppError("OTP expired", 400);
+    if (verificationExists.otp !== data.otp)
+      throw new AppError("Invalid OTP", 400);
 
     await db.emailVerification.update({
       where: { userId: existingUser.id },
@@ -84,8 +87,9 @@ export const AuthService = {
       existingUser.password
     );
     if (isSimilar)
-      throw new Error(
-        "New password cannot be the same as the current password."
+      throw new AppError(
+        "New password cannot be the same as the current password.",
+        409
       );
     const hashedPassword = await hashPassword(data.password);
 
@@ -97,5 +101,53 @@ export const AuthService = {
     return { message: "Password reset successfully." };
   },
 
-  login: async () => {},
+  login: async (data: LoginReq) => {
+    const existingUser: User = await db.user.findUnique({
+      where: { email: data.email },
+    });
+    if (!existingUser) {
+      throw new AppError("Invalid login credentials", 400);
+    }
+
+    const isSimilar = await verifyPassword(
+      data.password,
+      existingUser.password
+    );
+    if (!isSimilar) {
+      throw new AppError("Invalid login credentials", 400);
+    }
+
+    if (!existingUser.isActive) {
+      throw new AppError(
+        "Account not activated. Please sign up again to verify your email.",
+        400
+      );
+    }
+
+    await db.userSession.updateMany({
+      where: { userId: existingUser.id, isValid: true },
+      data: { isValid: false },
+    });
+
+    const token = JwtAuth.getSignedToken({
+      id: existingUser.id,
+      email: data.email,
+      role: existingUser.role,
+      roleId: existingUser.roleId,
+    });
+    const expiresAt = addMinutes(new Date(), 15);
+
+    await db.userSession.create({
+      data: { userId: existingUser.id, token, expiresAt },
+    });
+
+    return {
+      message: "User logged in successfully.",
+      token,
+      user: {
+        email: existingUser.email,
+        role: existingUser.role,
+      },
+    };
+  },
 };
